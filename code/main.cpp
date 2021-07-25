@@ -22,6 +22,13 @@ const char* vertexShaderSource = "#version 330 core\n"
 	"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 	"}\0";
 
+const char* fragmentShaderSource = "#version 330 core\n"
+	"out vec4 FragColor;\n"
+	"void main()\n"
+	"{\n"
+	"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+	"}\0";
+
 int main()
 {
 	glfwInit();
@@ -62,14 +69,14 @@ int main()
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// Make a shader object
+	// Make a shader object for vertex shader
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
 
-	// TODO: CHECK SHADER COMPILATION STATUS
+	// TODO: CHECK SHADER COMPILATION STATUS NOTE: IT'S DONE
 	int success;
 	char infoLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -80,6 +87,46 @@ int main()
 		std::cerr << infoLog << std::endl;
 		throw std::runtime_error("Failed to compile vertex shader");
 	}
+
+	// Make a shader object for fragment shader
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cerr << infoLog << std::endl;
+		throw std::runtime_error("Failed to compile fragment shader");
+	}
+
+	// Use both shader (bind it)
+	// Create shader program
+
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram();
+
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+
+	if (!success)
+	{
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cerr << infoLog << std::endl;
+		throw std::runtime_error("Failed to link shader program");
+	}
+
+	glUseProgram(shaderProgram);
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
 	while (!glfwWindowShouldClose(window))
 	{
