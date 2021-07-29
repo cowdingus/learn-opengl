@@ -186,9 +186,7 @@ int main()
 	/******************** SHADER ********************/
 
 	glUseProgram(shaderProgram);
-	glBindVertexArray(rectangleVAO);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glBindVertexArray(VAO);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -197,7 +195,7 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
