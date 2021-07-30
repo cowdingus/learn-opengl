@@ -1,6 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "Shader.hpp"
+
 #include <iostream>
 #include <stdexcept>
 
@@ -126,6 +128,8 @@ int main()
 	glBindVertexArray(0);
 	/******************** Rectangle ********************/
 
+	#define USE_SHADER_CLASS 1
+	#if(!USE_SHADER_CLASS)
 	/******************** SHADER ********************/
 	// Make a shader object for vertex shader
 	unsigned int vertexShader;
@@ -184,8 +188,15 @@ int main()
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 	/******************** SHADER ********************/
+	#else
+	Shader shader("assets/shaders/vertexShader.glsl", "assets/shaders/fragmentShader.glsl");
+	#endif
 
+	#if(!USE_SHADER_CLASS)
 	glUseProgram(shaderProgram);
+	#else
+	shader.use();
+	#endif
 	glBindVertexArray(VAO);
 
 	while (!glfwWindowShouldClose(window))
