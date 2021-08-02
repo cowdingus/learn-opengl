@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Shader.hpp"
+#include "stb_image.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -60,6 +61,34 @@ int main()
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	/******************** Texture ********************/
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("assets/images/container.jpg", &width, &height, &nrChannels, 0);
+
+	if (!data)
+	{
+		stbi_image_free(data);
+		throw std::runtime_error("Failed to load container.jpg");
+	}
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_image_free(data);
+	/******************** Texture ********************/
+
 	/******************** Triangle ********************/
 	float vertices[] = {
 		// positions         // colors
@@ -92,10 +121,11 @@ int main()
 
 	/******************** Rectangle ********************/
 	float rectangleVertices[] = {
-		0.5f,  0.5f, 0.0f,  // top right
-		0.5f, -0.5f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f,  // bottom left
-		-0.5f,  0.5f, 0.0f   // top left
+		// positions         // colors        // texcoords
+		0.5f,  0.5f, 0.0f,   1.f, 1.f, 1.f,   1.0f, 1.0f,  // top right
+		0.5f, -0.5f, 0.0f,   1.f, 1.f, 1.f,   1.0f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f,  1.f, 1.f, 1.f,   0.0f, 0.0f,  // bottom left
+		-0.5f,  0.5f, 0.0f,  1.f, 1.f, 1.f,   0.0f, 1.0f,  // top left
 	};
 	unsigned int rectangleIndices[] = {  // note that we start from 0!
 		0, 1, 3,   // first triangle
@@ -122,8 +152,14 @@ int main()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rectangleEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(rectangleIndices), rectangleIndices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 	/******************** Rectangle ********************/
@@ -197,7 +233,14 @@ int main()
 	#else
 	shader.use();
 	#endif
+
+	#define DRAW_RECTANGLE 1
+	#if(DRAW_RECTANGLE)
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindVertexArray(rectangleVAO);
+	#elif(DRAW_TRIANGLE)
 	glBindVertexArray(VAO);
+	#endif
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -205,8 +248,12 @@ int main()
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-
+		
+		#if(DRAW_RECTANGLE)
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		#elif(DRAW_TRIANGLE)
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+		#endif
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
