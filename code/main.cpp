@@ -62,6 +62,8 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	/******************** Texture ********************/
+	stbi_set_flip_vertically_on_load(true);
+
 	int width, height, nrChannels;
 	unsigned char* data = stbi_load("assets/images/container.jpg", &width, &height, &nrChannels, 0);
 
@@ -82,6 +84,31 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_image_free(data);
+
+	data = stbi_load("assets/images/awesomeface.png", &width, &height, &nrChannels, 0);
+
+	if (!data)
+	{
+		stbi_image_free(data);
+		throw std::runtime_error("Failed to load awesomeface.png");
+	}
+
+	unsigned int texture1;
+	glGenTextures(1, &texture1);
+
+	glBindTexture(GL_TEXTURE_2D, texture1);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -236,7 +263,18 @@ int main()
 
 	#define DRAW_RECTANGLE 1
 	#if(DRAW_RECTANGLE)
+	
+	#if(USE_SHADER_CLASS)
+	shader.setInt("ourTexture1", 0);
+	shader.setInt("ourTexture2", 1);
+	#endif
+
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+
 	glBindVertexArray(rectangleVAO);
 	#elif(DRAW_TRIANGLE)
 	glBindVertexArray(VAO);
