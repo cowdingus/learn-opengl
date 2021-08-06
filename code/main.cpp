@@ -1,6 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Shader.hpp"
 #include "stb_image.h"
 
@@ -263,7 +267,7 @@ int main()
 
 	#define DRAW_RECTANGLE 1
 	#if(DRAW_RECTANGLE)
-	
+
 	#if(USE_SHADER_CLASS)
 	shader.setInt("ourTexture1", 0);
 	shader.setInt("ourTexture2", 1);
@@ -280,9 +284,22 @@ int main()
 	glBindVertexArray(VAO);
 	#endif
 
+	/*
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+	trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+	*/
+
+	unsigned int transformLoc = glGetUniformLocation(shader.getId(), "transform");
+
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
+
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
