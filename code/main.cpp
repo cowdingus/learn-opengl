@@ -40,6 +40,50 @@ const char* fragmentShaderSource = "#version 330 core\n"
 	"	FragColor = vec4(ourColor.rgb, 1.0f);\n"
 	"}\0";
 
+float cubeVertices[] = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+
 int main()
 {
 	glfwInit();
@@ -195,6 +239,27 @@ int main()
 	glBindVertexArray(0);
 	/******************** Rectangle ********************/
 
+	/******************** Cube ********************/
+	unsigned int cubeVBO;
+	glGenBuffers(1, &cubeVBO);
+
+	unsigned int cubeVAO;
+	glGenVertexArrays(1, &cubeVAO);
+
+	glBindVertexArray(cubeVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0);
+	/******************** Cube ********************/
+
 	#define USE_SHADER_CLASS 1
 	#if(!USE_SHADER_CLASS)
 	/******************** SHADER ********************/
@@ -265,13 +330,13 @@ int main()
 	shader.use();
 	#endif
 
-	#define DRAW_RECTANGLE 1
-	#if(DRAW_RECTANGLE)
-
 	#if(USE_SHADER_CLASS)
 	shader.setInt("ourTexture1", 0);
 	shader.setInt("ourTexture2", 1);
 	#endif
+
+	#define DRAW_CUBE 1
+	#if(DRAW_RECTANGLE)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -280,6 +345,15 @@ int main()
 	glBindTexture(GL_TEXTURE_2D, texture1);
 
 	glBindVertexArray(rectangleVAO);
+	#elif(DRAW_CUBE)
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+
+	glBindVertexArray(cubeVAO);
 	#elif(DRAW_TRIANGLE)
 	glBindVertexArray(VAO);
 	#endif
@@ -301,8 +375,16 @@ int main()
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+	float previousTime = 0.0f;
+	float currentTime = 0.0f;
+	float elapsed = 0.0f;
+
 	while (!glfwWindowShouldClose(window))
 	{
+		previousTime = currentTime;
+		currentTime = glfwGetTime();
+		elapsed = currentTime - previousTime;
+
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -310,6 +392,11 @@ int main()
 
 		#if(DRAW_RECTANGLE)
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		#elif(DRAW_CUBE)
+		model = glm::rotate(model, elapsed * glm::radians(10.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		#elif(DRAW_TRIANGLE)
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		#endif
