@@ -22,24 +22,6 @@ void processInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window, true);
 }
 
-const char* vertexShaderSource = "#version 330 core\n"
-	"layout (location = 0) in vec3 aPos;\n"
-	"layout (location = 1) in vec3 aColor;\n"
-	"out vec3 ourColor;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-	"	ourColor = aColor;\n"
-	"}\0";
-
-const char* fragmentShaderSource = "#version 330 core\n"
-	"in vec3 ourColor;\n"
-	"out vec4 FragColor;\n"
-	"void main()\n"
-	"{\n"
-	"	FragColor = vec4(ourColor.rgb, 1.0f);\n"
-	"}\0";
-
 float cubeVertices[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 	0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -177,81 +159,6 @@ int main()
 	stbi_image_free(data);
 	/******************** Texture ********************/
 
-	/******************** Triangle ********************/
-	float vertices[] = {
-		// positions         // colors
-		0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   // bottom right
-		-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-		0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f    // top
-	};
-
-	// Make a VBO object
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-
-	// Make a VAO object
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(0);
-	/******************** Triangle ********************/
-
-	/******************** Rectangle ********************/
-	float rectangleVertices[] = {
-		// positions         // colors        // texcoords
-		0.5f,  0.5f, 0.0f,   1.f, 1.f, 1.f,   1.0f, 1.0f,  // top right
-		0.5f, -0.5f, 0.0f,   1.f, 1.f, 1.f,   1.0f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f,  1.f, 1.f, 1.f,   0.0f, 0.0f,  // bottom left
-		-0.5f,  0.5f, 0.0f,  1.f, 1.f, 1.f,   0.0f, 1.0f,  // top left
-	};
-	unsigned int rectangleIndices[] = {  // note that we start from 0!
-		0, 1, 3,   // first triangle
-		1, 2, 3    // second triangle
-	};
-
-	// Make a VBO object
-	unsigned int rectangleVBO;
-	glGenBuffers(1, &rectangleVBO);
-
-	// Make a EBO object
-	unsigned int rectangleEBO;
-	glGenBuffers(1, &rectangleEBO);
-
-	// Make a VAO object
-	unsigned int rectangleVAO;
-	glGenVertexArrays(1, &rectangleVAO);
-
-	glBindVertexArray(rectangleVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, rectangleVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rectangleEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(rectangleIndices), rectangleIndices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0);
-	/******************** Rectangle ********************/
-
 	/******************** Cube ********************/
 	unsigned int cubeVBO;
 	glGenBuffers(1, &cubeVBO);
@@ -273,92 +180,11 @@ int main()
 	glBindVertexArray(0);
 	/******************** Cube ********************/
 
-	#define USE_SHADER_CLASS 1
-	#if(!USE_SHADER_CLASS)
-	/******************** SHADER ********************/
-	// Make a shader object for vertex shader
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	// TODO: CHECK SHADER COMPILATION STATUS NOTE: IT'S DONE
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cerr << infoLog << std::endl;
-		throw std::runtime_error("Failed to compile vertex shader");
-	}
-
-	// Make a shader object for fragment shader
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cerr << infoLog << std::endl;
-		throw std::runtime_error("Failed to compile fragment shader");
-	}
-
-	// Use both shader (bind it)
-	// Create shader program
-
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cerr << infoLog << std::endl;
-		throw std::runtime_error("Failed to link shader program");
-	}
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	/******************** SHADER ********************/
-	#else
 	Shader shader("assets/shaders/vertexShader.glsl", "assets/shaders/fragmentShader.glsl");
-	#endif
-
-	#if(!USE_SHADER_CLASS)
-	glUseProgram(shaderProgram);
-	#else
 	shader.use();
-	#endif
 
-	#if(USE_SHADER_CLASS)
 	shader.setInt("ourTexture1", 0);
 	shader.setInt("ourTexture2", 1);
-	#endif
-
-	#define DRAW_CUBE 1
-	#if(DRAW_RECTANGLE)
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-
-	glBindVertexArray(rectangleVAO);
-	#elif(DRAW_CUBE)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -367,9 +193,6 @@ int main()
 	glBindTexture(GL_TEXTURE_2D, texture1);
 
 	glBindVertexArray(cubeVAO);
-	#elif(DRAW_TRIANGLE)
-	glBindVertexArray(VAO);
-	#endif
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -405,9 +228,6 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		#if(DRAW_RECTANGLE)
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		#elif(DRAW_CUBE)
 		for (unsigned int x = 0; x < 10; ++x)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
@@ -418,9 +238,6 @@ int main()
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
-		#elif(DRAW_TRIANGLE)
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		#endif
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
