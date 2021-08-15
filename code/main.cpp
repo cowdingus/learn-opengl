@@ -11,17 +11,6 @@
 #include <iostream>
 #include <stdexcept>
 
-void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
-
 float cubeVertices[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 	0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -78,6 +67,31 @@ glm::vec3 cubePositions[] = {
 	glm::vec3( 1.5f,  0.2f, -1.5f),
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 };
+
+glm::vec3 cameraPos   {0.0f, 0.0f, 3.0f};
+glm::vec3 cameraFront {0.0f, 0.0f, -1.0f};
+glm::vec3 cameraUp    {0.0f, 1.0f, 0.0f};
+
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window, float elapsed)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	const float cameraSpeed = 2.0f;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += (cameraSpeed * elapsed) * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= (cameraSpeed * elapsed) * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * (cameraSpeed * elapsed);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * (cameraSpeed * elapsed);
+}
 
 int main()
 {
@@ -183,6 +197,26 @@ int main()
 	Shader shader("assets/shaders/vertexShader.glsl", "assets/shaders/fragmentShader.glsl");
 	shader.use();
 
+	/******************** Transformations ********************/
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::lookAt(
+			cameraPos,
+			cameraPos + cameraFront,
+			cameraUp
+	);
+
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.1f, 100.0f);
+
+	shader.setMatrix4("model", model);
+	shader.setMatrix4("view", view);
+	shader.setMatrix4("projection", projection);
+	/******************** Transformations ********************/
+
+	/******************** Object&Texture Bindings ********************/
 	shader.setInt("ourTexture1", 0);
 	shader.setInt("ourTexture2", 1);
 
@@ -193,23 +227,7 @@ int main()
 	glBindTexture(GL_TEXTURE_2D, texture1);
 
 	glBindVertexArray(cubeVAO);
-
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-	glm::mat4 view = glm::mat4(1.0f);
-	view = glm::lookAt(
-			glm::vec3(0.0f, 0.0f, 3.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f)
-	);
-
-	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.1f, 100.0f);
-
-	shader.setMatrix4("model", model);
-	shader.setMatrix4("view", view);
-	shader.setMatrix4("projection", projection);
+	/******************** Object&Texture Bindings ********************/
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -223,19 +241,19 @@ int main()
 		currentTime = glfwGetTime();
 		elapsed = currentTime - previousTime;
 
-		const float radius = 5.0f;
-		float camX = sin(glfwGetTime()) * radius;
-		float camZ = cos(glfwGetTime()) * radius;
+		processInput(window, elapsed);
+
 		view = glm::lookAt(
-				glm::vec3{camX, 0.0f, camZ}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
+				cameraPos,
+				cameraPos + cameraFront,
+				cameraUp
 		);
 		shader.setMatrix4("view", view);
-
-		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Render many cubes
 		for (unsigned int x = 0; x < 10; ++x)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
