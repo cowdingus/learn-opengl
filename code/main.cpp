@@ -72,9 +72,39 @@ glm::vec3 cameraPos   {0.0f, 0.0f, 3.0f};
 glm::vec3 cameraFront {0.0f, 0.0f, -1.0f};
 glm::vec3 cameraUp    {0.0f, 1.0f, 0.0f};
 
+float yaw = -90.0f;
+float pitch = 0;
+
+float lastX = 400.0f;
+float lastY = 300.0f;
+
 void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+}
+
+void mouse_callback([[maybe_unused]] GLFWwindow* window, double xpos, double ypos)
+{
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+	lastX = xpos;
+	lastY = ypos;
+
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f) pitch = 89.0f;
+	else if (pitch < -89.0f) pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
 }
 
 void processInput(GLFWwindow* window, float elapsed)
@@ -118,6 +148,8 @@ int main()
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
 	/******************** Texture ********************/
 	stbi_set_flip_vertically_on_load(true);
 
@@ -229,7 +261,9 @@ int main()
 	glBindVertexArray(cubeVAO);
 	/******************** Object&Texture Bindings ********************/
 
+	/** Enable Depth Buffer **/
 	glEnable(GL_DEPTH_TEST);
+	/** Enable Depth Buffer **/
 
 	float previousTime = 0.0f;
 	float currentTime = 0.0f;
